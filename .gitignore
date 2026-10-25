@@ -2,3 +2,6 @@
 !.editorconfig
 !.gitignore
 !.pre-commit-config.yaml
+!.sqlc.yml
+!.oapi-config.yml
+!.sqlfluff

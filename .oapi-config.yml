@@ -1,0 +1,9 @@
+---
+package: main
+generate:
+  echo-server: false
+  client: false
+  models: true
+  embedded-spec: false
+allow-remote-refs-from:
+  - '*'
