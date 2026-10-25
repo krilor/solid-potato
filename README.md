@@ -1,6 +1,8 @@
-# Project
+# Solid Potato
 
-This is a template repository for my repos.
+Ta en potet!
+
+https://www.nrk.no/video/portveien-2---ta-en-potet_257213
 
 ## License
 
