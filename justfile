@@ -5,6 +5,7 @@ init:
 # Lint all-the-things
 lint:
     pre-commit run --all-files
+    vacuum lint openapi.yml
 
 # Start the local development environment
 start:
@@ -16,6 +17,13 @@ reset:
     set -euo pipefail
 
     PGPASSWORD=postgres_pwd psql -h localhost -p 5432 -U postgres -d potato -f local/db/reset.sql
+
+# Generate code with deterministic tools
+generate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    go generate ./...
 
 # Run db migrations
 migrate:

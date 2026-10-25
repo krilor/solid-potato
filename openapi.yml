@@ -1,0 +1,202 @@
+---
+openapi: 3.0.0
+info:
+    title: Solid Potato API
+    version: 1.0.0
+    description: API for managing Solid Potato transactions and organizations
+servers:
+    - url: /
+tags:
+    - name: transactions
+      description: Read card transactions.
+components:
+    schemas:
+        TransactionStatus:
+            description: Processing status of a transaction.
+            type: string
+            enum:
+                - APPROVED
+                - REJECTED
+                - PENDING
+            example: APPROVED
+        CardType:
+            description: The type of card used in a transaction.
+            type: string
+            enum:
+                - AmericanExpress
+                - Visa
+                - Mastercard
+            example: Visa
+        TransactionResponse:
+            description: A single card transaction.
+            type: object
+            required:
+                - reference
+                - cardNumber
+                - cardType
+                - transactionTime
+                - orgNumber
+                # orgName is nullable
+                - quantity
+                - status
+            properties:
+                reference:
+                    description: The reference UUID of the transaction.
+                    type: string
+                    format: uuid
+                    example: dbde1045-a4e6-4969-95b6-dc20624c9865
+                cardNumber:
+                    description: The card number used in the transaction.
+                    type: string
+                    example: "0552481933892296"
+                cardType:
+                    description: The type of card used in the transaction.
+                    example: Visa
+                    allOf:
+                        - $ref: "#/components/schemas/CardType"
+                transactionTime:
+                    description: The time when the transaction occurred.
+                    type: string
+                    format: date-time
+                    example: "2025-01-23T09:54:52Z"
+                orgNumber:
+                    description: The organization number associated with the transaction.
+                    type: string
+                    example: "313227502"
+                orgName:
+                    description: The name of the organization associated with the transaction.
+                    type: string
+                    nullable: true
+                    example: Example AS
+                quantity:
+                    description: Amount in NOK, in øre.
+                    type: integer
+                    format: int64
+                    example: 37522
+                status:
+                    description: The status of the transaction.
+                    example: APPROVED
+                    allOf:
+                        - $ref: "#/components/schemas/TransactionStatus"
+            example:
+                reference: dbde1045-a4e6-4969-95b6-dc20624c9865
+                cardNumber: "0552481933892296"
+                cardType: Visa
+                transactionTime: "2025-01-23T09:54:52Z"
+                orgNumber: "313227502"
+                orgName: Example AS
+                quantity: 37522
+                status: APPROVED
+        Error:
+            description: Error details.
+            type: object
+            required: [message]
+            properties:
+                message:
+                    description: Human readable error message.
+                    type: string
+                    example: Invalid request parameters.
+            example:
+                message: Invalid request parameters.
+    responses:
+        BadRequest:
+            description: Invalid request parameters.
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+                    example:
+                        message: Invalid request parameters.
+        NotFound:
+            description: Resource not found.
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+                    example:
+                        message: Transaction not found.
+paths:
+    /transactions:
+        get:
+            operationId: listTransactions
+            summary: List transactions
+            tags: [transactions]
+            parameters:
+                - name: from
+                  in: query
+                  description: Only include transactions at or after this time (inclusive).
+                  schema:
+                      type: string
+                      format: date-time
+                      example: "2025-01-01T00:00:00Z"
+                - name: to
+                  in: query
+                  description: Only include transactions before this time (exclusive).
+                  schema:
+                      type: string
+                      format: date-time
+                      example: "2025-02-01T00:00:00Z"
+                - name: status
+                  in: query
+                  description: Filter by status. Repeat the parameter to match multiple statuses.
+                  style: form
+                  explode: true
+                  schema:
+                      type: array
+                      items:
+                          $ref: "#/components/schemas/TransactionStatus"
+            responses:
+                "200":
+                    description: List of transactions.
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/TransactionResponse"
+                            example:
+                                - reference: dbde1045-a4e6-4969-95b6-dc20624c9865
+                                  cardNumber: "0552481933892296"
+                                  cardType: Visa
+                                  transactionTime: "2025-01-23T09:54:52Z"
+                                  orgNumber: "313227502"
+                                  orgName: Example AS
+                                  quantity: 37522
+                                  status: APPROVED
+                "400":
+                    $ref: "#/components/responses/BadRequest"
+
+    /transactions/{reference}:
+        get:
+            operationId: readTransaction
+            summary: Read a transaction by reference
+            tags: [transactions]
+            parameters:
+                - name: reference
+                  in: path
+                  required: true
+                  description: Reference UUID of the transaction to read.
+                  schema:
+                      type: string
+                      format: uuid
+                      example: dbde1045-a4e6-4969-95b6-dc20624c9865
+            responses:
+                "200":
+                    description: The transaction.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TransactionResponse"
+                            example:
+                                reference: dbde1045-a4e6-4969-95b6-dc20624c9865
+                                cardNumber: "0552481933892296"
+                                cardType: Visa
+                                transactionTime: "2025-01-23T09:54:52Z"
+                                orgNumber: "313227502"
+                                orgName: Example AS
+                                quantity: 37522
+                                status: APPROVED
+                "400":
+                    $ref: "#/components/responses/BadRequest"
+                "404":
+                    $ref: "#/components/responses/NotFound"

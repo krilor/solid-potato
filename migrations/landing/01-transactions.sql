@@ -18,7 +18,7 @@ SELECT
     belop_ore AS quantity_ore,
     btrim(kortnummer) AS card_number,
     CASE lower(btrim(korttype))
-        WHEN 'amex' THEN 'AmEx'
+        WHEN 'amex' THEN 'AmericanExpress'
         WHEN 'visa' THEN 'Visa'
         WHEN 'mastercard' THEN 'Mastercard'
         ELSE btrim(korttype)
@@ -29,7 +29,7 @@ SELECT
         WHEN 'AVVIST' THEN 'REJECTED'
         WHEN 'VENTENDE' THEN 'PENDING'
         ELSE upper(btrim(transaksjonsstatus))
-    END AS transaction_status
+    END AS status
 FROM (
     -- assuming that we only need the latest transaction per reference
     SELECT DISTINCT ON (referanse) *
@@ -50,7 +50,7 @@ RETURNS VOID
 SECURITY DEFINER
 AS $$
 BEGIN
-    INSERT INTO potato.transactions (reference, card_number, card_type, transaction_time, org_number, quantity_ore, transaction_status)
+    INSERT INTO potato.transactions (reference, card_number, card_type, transaction_time, org_number, quantity_ore, status)
     SELECT
         reference,
         card_number,
@@ -58,7 +58,7 @@ BEGIN
         transaction_time,
         org_number,
         quantity_ore,
-        transaction_status
+        status
     FROM landing.transactions
     ON CONFLICT (reference) DO UPDATE
     SET card_number = EXCLUDED.card_number,
@@ -66,6 +66,6 @@ BEGIN
         transaction_time = EXCLUDED.transaction_time,
         org_number = EXCLUDED.org_number,
         quantity_ore = EXCLUDED.quantity_ore,
-        transaction_status = EXCLUDED.transaction_status;
+        status = EXCLUDED.status;
 END;
 $$ LANGUAGE plpgsql;
