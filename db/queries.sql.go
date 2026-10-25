@@ -11,6 +11,55 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const listTransactionStats = `-- name: ListTransactionStats :many
+SELECT
+    t.org_number,
+    o.full_name as org_name,
+    (sum(t.quantity_ore) / 100.0)::float4 as sum_quantity,
+    count(*) FILTER (WHERE status = 'APPROVED') as num_approved,
+    count(*) FILTER (WHERE status = 'REJECTED') as num_rejected,
+    count(*) FILTER (WHERE status = 'PENDING') as num_pending
+FROM potato.transactions t
+INNER JOIN potato.organizations o ON t.org_number = o.org_number
+GROUP BY t.org_number, o.full_name
+`
+
+type ListTransactionStatsRow struct {
+	OrgNumber   string  `json:"org_number"`
+	OrgName     string  `json:"org_name"`
+	SumQuantity float32 `json:"sum_quantity"`
+	NumApproved int64   `json:"num_approved"`
+	NumRejected int64   `json:"num_rejected"`
+	NumPending  int64   `json:"num_pending"`
+}
+
+func (q *Queries) ListTransactionStats(ctx context.Context) ([]ListTransactionStatsRow, error) {
+	rows, err := q.db.Query(ctx, listTransactionStats)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTransactionStatsRow{}
+	for rows.Next() {
+		var i ListTransactionStatsRow
+		if err := rows.Scan(
+			&i.OrgNumber,
+			&i.OrgName,
+			&i.SumQuantity,
+			&i.NumApproved,
+			&i.NumRejected,
+			&i.NumPending,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTransactions = `-- name: ListTransactions :many
 SELECT
     t.reference,
@@ -22,7 +71,7 @@ SELECT
     (t.quantity_ore / 100.0)::float4 as quantity,
     t.status
 FROM potato.transactions t
-LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+INNER JOIN potato.organizations o ON t.org_number = o.org_number
 WHERE coalesce($1, '-infinity'::timestamptz) <= t.transaction_time
 AND coalesce($2, 'infinity'::timestamptz) > t.transaction_time
 AND coalesce($3, t.status) = t.status
@@ -40,7 +89,7 @@ type ListTransactionsRow struct {
 	CardType        string             `json:"card_type"`
 	TransactionTime pgtype.Timestamptz `json:"transaction_time"`
 	OrgNumber       string             `json:"org_number"`
-	OrgName         pgtype.Text        `json:"org_name"`
+	OrgName         string             `json:"org_name"`
 	Quantity        float32            `json:"quantity"`
 	Status          string             `json:"status"`
 }
@@ -85,7 +134,7 @@ SELECT
     (t.quantity_ore / 100.0)::float4 as quantity,
     t.status
 FROM potato.transactions t
-LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+INNER JOIN potato.organizations o ON t.org_number = o.org_number
 WHERE t.reference = $1
 `
 
@@ -95,7 +144,7 @@ type ReadTransactionByReferenceRow struct {
 	CardType        string             `json:"card_type"`
 	TransactionTime pgtype.Timestamptz `json:"transaction_time"`
 	OrgNumber       string             `json:"org_number"`
-	OrgName         pgtype.Text        `json:"org_name"`
+	OrgName         string             `json:"org_name"`
 	Quantity        float32            `json:"quantity"`
 	Status          string             `json:"status"`
 }

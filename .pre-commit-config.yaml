@@ -14,7 +14,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-yaml
       - id: end-of-file-fixer
-      - id: pretty-format-json
       - id: trailing-whitespace
       - id: fix-byte-order-marker
 

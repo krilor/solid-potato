@@ -66,6 +66,41 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// OrganizationStatsResponse Transaction statistics for a single organization.
+//
+// Example: {"numApproved":10,"numPending":1,"numRejected":2,"orgName":"Example AS","orgNumber":"313227502","sumQuantity":1375.22}
+type OrganizationStatsResponse struct {
+	// NumApproved Number of approved transactions.
+	//
+	// Example: 10
+	NumApproved int64 `json:"numApproved"`
+
+	// NumPending Number of pending transactions.
+	//
+	// Example: 1
+	NumPending int64 `json:"numPending"`
+
+	// NumRejected Number of rejected transactions.
+	//
+	// Example: 2
+	NumRejected int64 `json:"numRejected"`
+
+	// OrgName The name of the organization.
+	//
+	// Example: Example AS
+	OrgName string `json:"orgName"`
+
+	// OrgNumber The organization number.
+	//
+	// Example: 313227502
+	OrgNumber string `json:"orgNumber"`
+
+	// SumQuantity Total amount in NOK across all transactions.
+	//
+	// Example: 1375.22
+	SumQuantity float32 `json:"sumQuantity"`
+}
+
 // TransactionResponse A single card transaction.
 //
 // Example: {"cardNumber":"0552481933892296","cardType":"Visa","orgName":"Example AS","orgNumber":"313227502","quantity":375.22,"reference":"dbde1045-a4e6-4969-95b6-dc20624c9865","status":"APPROVED","transactionTime":"2025-01-23T09:54:52Z"}
@@ -83,7 +118,7 @@ type TransactionResponse struct {
 	// OrgName The name of the organization associated with the transaction.
 	//
 	// Example: Example AS
-	OrgName *string `json:"orgName,omitempty"`
+	OrgName string `json:"orgName"`
 
 	// OrgNumber The organization number associated with the transaction.
 	//

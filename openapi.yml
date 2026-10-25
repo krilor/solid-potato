@@ -9,6 +9,8 @@ servers:
 tags:
     - name: transactions
       description: Read card transactions.
+    - name: stats
+      description: Transaction statistics.
 components:
     schemas:
         TransactionStatus:
@@ -36,7 +38,7 @@ components:
                 - cardType
                 - transactionTime
                 - orgNumber
-                # orgName is nullable
+                - orgName
                 - quantity
                 - status
             properties:
@@ -66,7 +68,6 @@ components:
                 orgName:
                     description: The name of the organization associated with the transaction.
                     type: string
-                    nullable: true
                     example: Example AS
                 quantity:
                     description: Amount in NOK.
@@ -87,6 +88,52 @@ components:
                 orgName: Example AS
                 quantity: 375.22
                 status: APPROVED
+        OrganizationStatsResponse:
+            description: Transaction statistics for a single organization.
+            type: object
+            required:
+                - orgNumber
+                - orgName
+                - sumQuantity
+                - numApproved
+                - numRejected
+                - numPending
+            properties:
+                orgNumber:
+                    description: The organization number.
+                    type: string
+                    example: "313227502"
+                orgName:
+                    description: The name of the organization.
+                    type: string
+                    example: Example AS
+                sumQuantity:
+                    description: Total amount in NOK across all transactions.
+                    type: number
+                    format: float
+                    example: 1375.22
+                numApproved:
+                    description: Number of approved transactions.
+                    type: integer
+                    format: int64
+                    example: 10
+                numRejected:
+                    description: Number of rejected transactions.
+                    type: integer
+                    format: int64
+                    example: 2
+                numPending:
+                    description: Number of pending transactions.
+                    type: integer
+                    format: int64
+                    example: 1
+            example:
+                orgNumber: "313227502"
+                orgName: Example AS
+                sumQuantity: 1375.22
+                numApproved: 10
+                numRejected: 2
+                numPending: 1
         Error:
             description: Error details.
             type: object
@@ -196,3 +243,25 @@ paths:
                     $ref: "#/components/responses/BadRequest"
                 "404":
                     $ref: "#/components/responses/NotFound"
+
+    /stats/org:
+        get:
+            operationId: listOrganizationStats
+            summary: List transaction statistics per organization
+            tags: [stats]
+            responses:
+                "200":
+                    description: Transaction statistics for each organization.
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/OrganizationStatsResponse"
+                            example:
+                                - orgNumber: "313227502"
+                                  orgName: Example AS
+                                  sumQuantity: 1375.22
+                                  numApproved: 10
+                                  numRejected: 2
+                                  numPending: 1

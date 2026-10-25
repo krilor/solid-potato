@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,9 @@ import (
 	"github.com/krilor/solid-potato/db"
 )
 
+//go:embed openapi.json
+var openAPISpec []byte
+
 type server struct {
 	queries db.Querier
 }
@@ -26,8 +30,17 @@ func newServer(queries db.Querier) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /transactions", s.listTransactions)
 	mux.HandleFunc("GET /transactions/{reference}", s.readTransaction)
+	mux.HandleFunc("GET /stats/org", s.listOrganizationStats)
+	mux.HandleFunc("GET /openapi.json", serveOpenAPI)
 
 	return recoverer(logRequests(mux))
+}
+
+func serveOpenAPI(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write(openAPISpec); err != nil {
+		slog.Error("failed to write response", "error", err)
+	}
 }
 
 func (s *server) listTransactions(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +94,27 @@ func (s *server) readTransaction(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toTransactionResponse(row.Reference, row.CardNumber, row.CardType, row.TransactionTime, row.OrgNumber, row.OrgName, row.Quantity, row.Status))
 }
 
+func (s *server) listOrganizationStats(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.queries.ListTransactionStats(r.Context())
+	if err != nil {
+		internalError(w, r, "list organization stats", err)
+		return
+	}
+
+	resp := make([]OrganizationStatsResponse, len(rows))
+	for i, row := range rows {
+		resp[i] = OrganizationStatsResponse{
+			OrgNumber:   row.OrgNumber,
+			OrgName:     row.OrgName,
+			SumQuantity: row.SumQuantity,
+			NumApproved: row.NumApproved,
+			NumRejected: row.NumRejected,
+			NumPending:  row.NumPending,
+		}
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func parseListTransactionsParams(r *http.Request) (ListTransactionsParams, error) {
 	var params ListTransactionsParams
 	q := r.URL.Query()
@@ -110,19 +144,14 @@ func parseListTransactionsParams(r *http.Request) (ListTransactionsParams, error
 	return params, nil
 }
 
-func toTransactionResponse(reference pgtype.UUID, cardNumber, cardType string, transactionTime pgtype.Timestamptz, orgNumber string, orgName pgtype.Text, quantity float32, status string) TransactionResponse {
-	var name *string
-	if orgName.Valid {
-		name = &orgName.String
-	}
-
+func toTransactionResponse(reference pgtype.UUID, cardNumber, cardType string, transactionTime pgtype.Timestamptz, orgNumber, orgName string, quantity float32, status string) TransactionResponse {
 	return TransactionResponse{
 		Reference:       openapi_types.UUID(reference.Bytes),
 		CardNumber:      cardNumber,
 		CardType:        CardType(cardType),
 		TransactionTime: transactionTime.Time,
 		OrgNumber:       orgNumber,
-		OrgName:         name,
+		OrgName:         orgName,
 		Quantity:        quantity,
 		Status:          TransactionStatus(status),
 	}

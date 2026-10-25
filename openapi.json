@@ -1,0 +1,380 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Solid Potato API",
+        "version": "1.0.0",
+        "description": "API for managing Solid Potato transactions and organizations"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "tags": [
+        {
+            "name": "transactions",
+            "description": "Read card transactions."
+        },
+        {
+            "name": "stats",
+            "description": "Transaction statistics."
+        }
+    ],
+    "components": {
+        "schemas": {
+            "TransactionStatus": {
+                "description": "Processing status of a transaction.",
+                "type": "string",
+                "enum": [
+                    "APPROVED",
+                    "REJECTED",
+                    "PENDING"
+                ],
+                "example": "APPROVED"
+            },
+            "CardType": {
+                "description": "The type of card used in a transaction.",
+                "type": "string",
+                "enum": [
+                    "AmericanExpress",
+                    "Visa",
+                    "Mastercard"
+                ],
+                "example": "Visa"
+            },
+            "TransactionResponse": {
+                "description": "A single card transaction.",
+                "type": "object",
+                "required": [
+                    "reference",
+                    "cardNumber",
+                    "cardType",
+                    "transactionTime",
+                    "orgNumber",
+                    "orgName",
+                    "quantity",
+                    "status"
+                ],
+                "properties": {
+                    "reference": {
+                        "description": "The reference UUID of the transaction.",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "dbde1045-a4e6-4969-95b6-dc20624c9865"
+                    },
+                    "cardNumber": {
+                        "description": "The card number used in the transaction.",
+                        "type": "string",
+                        "example": "0552481933892296"
+                    },
+                    "cardType": {
+                        "description": "The type of card used in the transaction.",
+                        "example": "Visa",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CardType"
+                            }
+                        ]
+                    },
+                    "transactionTime": {
+                        "description": "The time when the transaction occurred.",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-23T09:54:52Z"
+                    },
+                    "orgNumber": {
+                        "description": "The organization number associated with the transaction.",
+                        "type": "string",
+                        "example": "313227502"
+                    },
+                    "orgName": {
+                        "description": "The name of the organization associated with the transaction.",
+                        "type": "string",
+                        "example": "Example AS"
+                    },
+                    "quantity": {
+                        "description": "Amount in NOK.",
+                        "type": "number",
+                        "format": "float",
+                        "example": 375.22
+                    },
+                    "status": {
+                        "description": "The status of the transaction.",
+                        "example": "APPROVED",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/TransactionStatus"
+                            }
+                        ]
+                    }
+                },
+                "example": {
+                    "reference": "dbde1045-a4e6-4969-95b6-dc20624c9865",
+                    "cardNumber": "0552481933892296",
+                    "cardType": "Visa",
+                    "transactionTime": "2025-01-23T09:54:52Z",
+                    "orgNumber": "313227502",
+                    "orgName": "Example AS",
+                    "quantity": 375.22,
+                    "status": "APPROVED"
+                }
+            },
+            "OrganizationStatsResponse": {
+                "description": "Transaction statistics for a single organization.",
+                "type": "object",
+                "required": [
+                    "orgNumber",
+                    "orgName",
+                    "sumQuantity",
+                    "numApproved",
+                    "numRejected",
+                    "numPending"
+                ],
+                "properties": {
+                    "orgNumber": {
+                        "description": "The organization number.",
+                        "type": "string",
+                        "example": "313227502"
+                    },
+                    "orgName": {
+                        "description": "The name of the organization.",
+                        "type": "string",
+                        "example": "Example AS"
+                    },
+                    "sumQuantity": {
+                        "description": "Total amount in NOK across all transactions.",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1375.22
+                    },
+                    "numApproved": {
+                        "description": "Number of approved transactions.",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "numRejected": {
+                        "description": "Number of rejected transactions.",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2
+                    },
+                    "numPending": {
+                        "description": "Number of pending transactions.",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    }
+                },
+                "example": {
+                    "orgNumber": "313227502",
+                    "orgName": "Example AS",
+                    "sumQuantity": 1375.22,
+                    "numApproved": 10,
+                    "numRejected": 2,
+                    "numPending": 1
+                }
+            },
+            "Error": {
+                "description": "Error details.",
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "description": "Human readable error message.",
+                        "type": "string",
+                        "example": "Invalid request parameters."
+                    }
+                },
+                "example": {
+                    "message": "Invalid request parameters."
+                }
+            }
+        },
+        "responses": {
+            "BadRequest": {
+                "description": "Invalid request parameters.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "Invalid request parameters."
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Resource not found.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "Transaction not found."
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/transactions": {
+            "get": {
+                "operationId": "listTransactions",
+                "summary": "List transactions",
+                "tags": [
+                    "transactions"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Only include transactions at or after this time (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Only include transactions before this time (exclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-02-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status.",
+                        "schema": {
+                            "$ref": "#/components/schemas/TransactionStatus"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of transactions.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TransactionResponse"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "reference": "dbde1045-a4e6-4969-95b6-dc20624c9865",
+                                        "cardNumber": "0552481933892296",
+                                        "cardType": "Visa",
+                                        "transactionTime": "2025-01-23T09:54:52Z",
+                                        "orgNumber": "313227502",
+                                        "orgName": "Example AS",
+                                        "quantity": 375.22,
+                                        "status": "APPROVED"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    }
+                }
+            }
+        },
+        "/transactions/{reference}": {
+            "get": {
+                "operationId": "readTransaction",
+                "summary": "Read a transaction by reference",
+                "tags": [
+                    "transactions"
+                ],
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "description": "Reference UUID of the transaction to read.",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "dbde1045-a4e6-4969-95b6-dc20624c9865"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The transaction.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                },
+                                "example": {
+                                    "reference": "dbde1045-a4e6-4969-95b6-dc20624c9865",
+                                    "cardNumber": "0552481933892296",
+                                    "cardType": "Visa",
+                                    "transactionTime": "2025-01-23T09:54:52Z",
+                                    "orgNumber": "313227502",
+                                    "orgName": "Example AS",
+                                    "quantity": 375.22,
+                                    "status": "APPROVED"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        },
+        "/stats/org": {
+            "get": {
+                "operationId": "listOrganizationStats",
+                "summary": "List transaction statistics per organization",
+                "tags": [
+                    "stats"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction statistics for each organization.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OrganizationStatsResponse"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "orgNumber": "313227502",
+                                        "orgName": "Example AS",
+                                        "sumQuantity": 1375.22,
+                                        "numApproved": 10,
+                                        "numRejected": 2,
+                                        "numPending": 1
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

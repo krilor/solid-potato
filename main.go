@@ -1,5 +1,6 @@
 //go:generate oapi-codegen -o ./api.gen.go -config ./.oapi-config.yml ./openapi.yml
 //go:generate sqlc -f .sqlc.yml generate
+//go:generate bash -c "yq -o json -I 4 ./openapi.yml > ./openapi.json"
 package main
 
 import (

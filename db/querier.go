@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	ListTransactionStats(ctx context.Context) ([]ListTransactionStatsRow, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]ListTransactionsRow, error)
 	ReadTransactionByReference(ctx context.Context, reference pgtype.UUID) (ReadTransactionByReferenceRow, error)
 }
