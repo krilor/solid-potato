@@ -11,6 +11,10 @@ lint:
 start:
     docker compose up -d
 
+# Run the API against the local database
+run:
+    DB_PASSWORD=reader_pwd go run .
+
 # Drop db schemas to start over
 reset:
     #!/usr/bin/env bash

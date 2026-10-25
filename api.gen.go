@@ -134,6 +134,6 @@ type ListTransactionsParams struct {
 	// To Only include transactions before this time (exclusive).
 	To *time.Time `form:"to,omitempty" json:"to,omitempty"`
 
-	// Status Filter by status. Repeat the parameter to match multiple statuses.
-	Status *[]TransactionStatus `form:"status,omitempty" json:"status,omitempty"`
+	// Status Filter by status.
+	Status *TransactionStatus `form:"status,omitempty" json:"status,omitempty"`
 }

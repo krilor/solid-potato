@@ -22,14 +22,14 @@ SELECT
     status
 FROM potato.transactions
 where coalesce($1, '-infinity'::timestamptz) <= transaction_time
-and coalesce($2, 'infinity'::timestamptz) >= transaction_time
-and status = ANY($3::text[])
+and coalesce($2, 'infinity'::timestamptz) > transaction_time
+and coalesce($3, status) = status
 `
 
 type ListTransactionsParams struct {
 	From   pgtype.Timestamptz `json:"from"`
 	To     pgtype.Timestamptz `json:"to"`
-	Status []string           `json:"status"`
+	Status pgtype.Text        `json:"status"`
 }
 
 type ListTransactionsRow struct {
@@ -48,7 +48,7 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListTransactionsRow
+	items := []ListTransactionsRow{}
 	for rows.Next() {
 		var i ListTransactionsRow
 		if err := rows.Scan(

@@ -9,8 +9,8 @@ SELECT
     status
 FROM potato.transactions
 where coalesce(sqlc.narg('from'), '-infinity'::timestamptz) <= transaction_time
-and coalesce(sqlc.narg('to'), 'infinity'::timestamptz) >= transaction_time
-and status = ANY(@status::text[]);
+and coalesce(sqlc.narg('to'), 'infinity'::timestamptz) > transaction_time
+and coalesce(sqlc.narg('status'), status) = status;
 
 -- name: ReadTransactionByReference :one
 SELECT

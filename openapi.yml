@@ -138,13 +138,9 @@ paths:
                       example: "2025-02-01T00:00:00Z"
                 - name: status
                   in: query
-                  description: Filter by status. Repeat the parameter to match multiple statuses.
-                  style: form
-                  explode: true
+                  description: Filter by status.
                   schema:
-                      type: array
-                      items:
-                          $ref: "#/components/schemas/TransactionStatus"
+                      $ref: "#/components/schemas/TransactionStatus"
             responses:
                 "200":
                     description: List of transactions.
