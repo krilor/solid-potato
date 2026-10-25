@@ -68,7 +68,7 @@ type Error struct {
 
 // TransactionResponse A single card transaction.
 //
-// Example: {"cardNumber":"0552481933892296","cardType":"Visa","orgName":"Example AS","orgNumber":"313227502","quantity":37522,"reference":"dbde1045-a4e6-4969-95b6-dc20624c9865","status":"APPROVED","transactionTime":"2025-01-23T09:54:52Z"}
+// Example: {"cardNumber":"0552481933892296","cardType":"Visa","orgName":"Example AS","orgNumber":"313227502","quantity":375.22,"reference":"dbde1045-a4e6-4969-95b6-dc20624c9865","status":"APPROVED","transactionTime":"2025-01-23T09:54:52Z"}
 type TransactionResponse struct {
 	// CardNumber The card number used in the transaction.
 	//
@@ -90,10 +90,10 @@ type TransactionResponse struct {
 	// Example: 313227502
 	OrgNumber string `json:"orgNumber"`
 
-	// Quantity Amount in NOK, in øre.
+	// Quantity Amount in NOK.
 	//
-	// Example: 37522
-	Quantity int64 `json:"quantity"`
+	// Example: 375.22
+	Quantity float32 `json:"quantity"`
 
 	// Reference The reference UUID of the transaction.
 	//

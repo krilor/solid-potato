@@ -1,25 +1,29 @@
 -- name: ListTransactions :many
 SELECT
-    reference,
-    card_number,
-    card_type,
-    transaction_time,
-    org_number,
-    quantity_ore,
-    status
-FROM potato.transactions
-where coalesce(sqlc.narg('from'), '-infinity'::timestamptz) <= transaction_time
-and coalesce(sqlc.narg('to'), 'infinity'::timestamptz) > transaction_time
-and coalesce(sqlc.narg('status'), status) = status;
+    t.reference,
+    t.card_number,
+    t.card_type,
+    t.transaction_time,
+    t.org_number,
+    o.full_name as org_name,
+    (t.quantity_ore / 100.0)::float4 as quantity,
+    t.status
+FROM potato.transactions t
+LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+WHERE coalesce(sqlc.narg('from'), '-infinity'::timestamptz) <= t.transaction_time
+AND coalesce(sqlc.narg('to'), 'infinity'::timestamptz) > t.transaction_time
+AND coalesce(sqlc.narg('status'), t.status) = t.status;
 
 -- name: ReadTransactionByReference :one
 SELECT
-    reference,
-    card_number,
-    card_type,
-    transaction_time,
-    org_number,
-    quantity_ore,
-    status
-FROM potato.transactions
-WHERE reference = sqlc.arg('reference');
+    t.reference,
+    t.card_number,
+    t.card_type,
+    t.transaction_time,
+    t.org_number,
+    o.full_name as org_name,
+    (t.quantity_ore / 100.0)::float4 as quantity,
+    t.status
+FROM potato.transactions t
+LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+WHERE t.reference = sqlc.arg('reference');

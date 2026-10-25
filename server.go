@@ -56,7 +56,7 @@ func (s *server) listTransactions(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]TransactionResponse, len(rows))
 	for i, row := range rows {
-		resp[i] = toTransactionResponse(row.Reference, row.CardNumber, row.CardType, row.TransactionTime, row.OrgNumber, row.QuantityOre, row.Status)
+		resp[i] = toTransactionResponse(row.Reference, row.CardNumber, row.CardType, row.TransactionTime, row.OrgNumber, row.OrgName, row.Quantity, row.Status)
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -78,7 +78,7 @@ func (s *server) readTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toTransactionResponse(row.Reference, row.CardNumber, row.CardType, row.TransactionTime, row.OrgNumber, row.QuantityOre, row.Status))
+	writeJSON(w, http.StatusOK, toTransactionResponse(row.Reference, row.CardNumber, row.CardType, row.TransactionTime, row.OrgNumber, row.OrgName, row.Quantity, row.Status))
 }
 
 func parseListTransactionsParams(r *http.Request) (ListTransactionsParams, error) {
@@ -110,14 +110,20 @@ func parseListTransactionsParams(r *http.Request) (ListTransactionsParams, error
 	return params, nil
 }
 
-func toTransactionResponse(reference pgtype.UUID, cardNumber, cardType string, transactionTime pgtype.Timestamptz, orgNumber string, quantityOre int64, status string) TransactionResponse {
+func toTransactionResponse(reference pgtype.UUID, cardNumber, cardType string, transactionTime pgtype.Timestamptz, orgNumber string, orgName pgtype.Text, quantity float32, status string) TransactionResponse {
+	var name *string
+	if orgName.Valid {
+		name = &orgName.String
+	}
+
 	return TransactionResponse{
 		Reference:       openapi_types.UUID(reference.Bytes),
 		CardNumber:      cardNumber,
 		CardType:        CardType(cardType),
 		TransactionTime: transactionTime.Time,
 		OrgNumber:       orgNumber,
-		Quantity:        quantityOre,
+		OrgName:         name,
+		Quantity:        quantity,
 		Status:          TransactionStatus(status),
 	}
 }

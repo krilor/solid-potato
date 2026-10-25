@@ -13,17 +13,19 @@ import (
 
 const listTransactions = `-- name: ListTransactions :many
 SELECT
-    reference,
-    card_number,
-    card_type,
-    transaction_time,
-    org_number,
-    quantity_ore,
-    status
-FROM potato.transactions
-where coalesce($1, '-infinity'::timestamptz) <= transaction_time
-and coalesce($2, 'infinity'::timestamptz) > transaction_time
-and coalesce($3, status) = status
+    t.reference,
+    t.card_number,
+    t.card_type,
+    t.transaction_time,
+    t.org_number,
+    o.full_name as org_name,
+    (t.quantity_ore / 100.0)::float4 as quantity,
+    t.status
+FROM potato.transactions t
+LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+WHERE coalesce($1, '-infinity'::timestamptz) <= t.transaction_time
+AND coalesce($2, 'infinity'::timestamptz) > t.transaction_time
+AND coalesce($3, t.status) = t.status
 `
 
 type ListTransactionsParams struct {
@@ -38,7 +40,8 @@ type ListTransactionsRow struct {
 	CardType        string             `json:"card_type"`
 	TransactionTime pgtype.Timestamptz `json:"transaction_time"`
 	OrgNumber       string             `json:"org_number"`
-	QuantityOre     int64              `json:"quantity_ore"`
+	OrgName         pgtype.Text        `json:"org_name"`
+	Quantity        float32            `json:"quantity"`
 	Status          string             `json:"status"`
 }
 
@@ -57,7 +60,8 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			&i.CardType,
 			&i.TransactionTime,
 			&i.OrgNumber,
-			&i.QuantityOre,
+			&i.OrgName,
+			&i.Quantity,
 			&i.Status,
 		); err != nil {
 			return nil, err
@@ -72,15 +76,17 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 
 const readTransactionByReference = `-- name: ReadTransactionByReference :one
 SELECT
-    reference,
-    card_number,
-    card_type,
-    transaction_time,
-    org_number,
-    quantity_ore,
-    status
-FROM potato.transactions
-WHERE reference = $1
+    t.reference,
+    t.card_number,
+    t.card_type,
+    t.transaction_time,
+    t.org_number,
+    o.full_name as org_name,
+    (t.quantity_ore / 100.0)::float4 as quantity,
+    t.status
+FROM potato.transactions t
+LEFT JOIN potato.organizations o ON t.org_number = o.org_number
+WHERE t.reference = $1
 `
 
 type ReadTransactionByReferenceRow struct {
@@ -89,7 +95,8 @@ type ReadTransactionByReferenceRow struct {
 	CardType        string             `json:"card_type"`
 	TransactionTime pgtype.Timestamptz `json:"transaction_time"`
 	OrgNumber       string             `json:"org_number"`
-	QuantityOre     int64              `json:"quantity_ore"`
+	OrgName         pgtype.Text        `json:"org_name"`
+	Quantity        float32            `json:"quantity"`
 	Status          string             `json:"status"`
 }
 
@@ -102,7 +109,8 @@ func (q *Queries) ReadTransactionByReference(ctx context.Context, reference pgty
 		&i.CardType,
 		&i.TransactionTime,
 		&i.OrgNumber,
-		&i.QuantityOre,
+		&i.OrgName,
+		&i.Quantity,
 		&i.Status,
 	)
 	return i, err

@@ -1,0 +1,5 @@
+#:schema https://json.schemastore.org/any.json
+
+env_files = [".env.local"]
+root = "."
+tmp_dir = ".tmp"

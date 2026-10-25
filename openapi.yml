@@ -69,10 +69,10 @@ components:
                     nullable: true
                     example: Example AS
                 quantity:
-                    description: Amount in NOK, in øre.
-                    type: integer
-                    format: int64
-                    example: 37522
+                    description: Amount in NOK.
+                    type: number
+                    format: float
+                    example: 375.22
                 status:
                     description: The status of the transaction.
                     example: APPROVED
@@ -85,7 +85,7 @@ components:
                 transactionTime: "2025-01-23T09:54:52Z"
                 orgNumber: "313227502"
                 orgName: Example AS
-                quantity: 37522
+                quantity: 375.22
                 status: APPROVED
         Error:
             description: Error details.
@@ -157,7 +157,7 @@ paths:
                                   transactionTime: "2025-01-23T09:54:52Z"
                                   orgNumber: "313227502"
                                   orgName: Example AS
-                                  quantity: 37522
+                                  quantity: 375.22
                                   status: APPROVED
                 "400":
                     $ref: "#/components/responses/BadRequest"
@@ -190,7 +190,7 @@ paths:
                                 transactionTime: "2025-01-23T09:54:52Z"
                                 orgNumber: "313227502"
                                 orgName: Example AS
-                                quantity: 37522
+                                quantity: 375.22
                                 status: APPROVED
                 "400":
                     $ref: "#/components/responses/BadRequest"

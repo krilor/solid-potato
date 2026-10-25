@@ -5,3 +5,6 @@
 !.sqlc.yml
 !.oapi-config.yml
 !.sqlfluff
+!.air.toml
+!.sqlfluffignore
+!.env.local
