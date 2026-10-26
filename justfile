@@ -15,6 +15,19 @@ start:
 run:
     DB_PASSWORD=reader_pwd go run .
 
+# Run unit-tests
+utest:
+    go test ./...
+
+# Run integraton-tests against running server
+itest host="http://localhost:8080":
+    hurl --test --variable host={{host}} hurl/*.hurl
+
+
+# Run fuzz-tests
+ftest:
+    uvx schemathesis run http://localhost:8080/openapi.json
+
 # Drop db schemas to start over
 reset:
     #!/usr/bin/env bash
