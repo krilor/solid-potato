@@ -126,3 +126,28 @@ type statsQuerier struct {
 func (q statsQuerier) ListTransactionStats(context.Context) ([]db.ListTransactionStatsRow, error) {
 	return q.rows, nil
 }
+
+func TestSanitizedQuery(t *testing.T) {
+	tests := []struct {
+		name  string
+		query string
+		want  string
+	}{
+		{name: "empty", query: "", want: ""},
+		{name: "sorted", query: "status=APPROVED&from=2025-01-01T00:00:00Z", want: "from=2025-01-01T00%3A00%3A00Z&status=APPROVED"},
+		{name: "control characters are escaped", query: "status=A%0AB%0D", want: "status=A%0AB%0D"},
+		{name: "long values are truncated", query: "status=" + strings.Repeat("a", 500), want: "status=" + strings.Repeat("a", maxLoggedQueryLen) + "..."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, "/transactions?"+tt.query, nil)
+			got := sanitizedQuery(r)
+			if strings.ContainsAny(got, "\r\n") {
+				t.Errorf("query contains raw control characters: %q", got)
+			}
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

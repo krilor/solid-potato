@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -184,6 +186,29 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
+const maxLoggedQueryLen = 128
+
+// sanitizedQuery returns the query parameters in a form that is safe to log.
+// Parameters are re-encoded, which escapes control characters such as newlines,
+// keys are sorted, and each key and value is truncated to limit log volume.
+func sanitizedQuery(r *http.Request) string {
+	q := r.URL.Query()
+	clean := make(url.Values, len(q))
+	for k, vs := range q {
+		for _, v := range vs {
+			clean.Add(truncate(k, maxLoggedQueryLen), truncate(v, maxLoggedQueryLen))
+		}
+	}
+	return truncate(clean.Encode(), 4*maxLoggedQueryLen)
+}
+
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return strings.ToValidUTF8(s[:n], "") + "..."
+}
+
 func logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -192,6 +217,7 @@ func logRequests(next http.Handler) http.Handler {
 		slog.InfoContext(r.Context(), "request",
 			"method", r.Method,
 			"path", r.URL.Path,
+			"query", sanitizedQuery(r),
 			"status", rec.status,
 			"duration", time.Since(start),
 		)
