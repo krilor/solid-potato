@@ -17,3 +17,23 @@ services:
       - type: bind
         source: ${PWD}/local/db/init.sql
         target: /docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: reader
+      DB_NAME: potato
+      DB_PASSWORD: reader_pwd
+    depends_on:
+      db:
+        condition: service_healthy

@@ -11,9 +11,14 @@ lint:
 start:
     docker compose up -d
 
-# Run the API against the local database
-run:
-    DB_PASSWORD=reader_pwd go run .
+# remove containers
+down:
+    docker compose down
+
+# Run the API with hot reloading
+serve:
+    docker compose stop backend
+    air
 
 # Run unit-tests
 utest:
